@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Código Civil y Comercial de la Nación</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="js/page-flip.browser.js"></script>
+<style>
+  :root {
+    --bg: #2b2620;
+    --panel: #3a332b;
+    --panel-2: #453d33;
+    --ink: #f3ede2;
+    --ink-dim: #cabfa9;
+    --accent: #c9a24b;
+    --accent-2: #8a6d3b;
+    --border: #55493a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+    overflow: hidden;
+  }
+  #app { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+
+  #toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: var(--ink-dim);
+  }
+  #book-title {
+    font-family: Georgia, serif;
+    color: var(--accent);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin-right: 10px;
+    white-space: nowrap;
+  }
+  #toolbar button {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #toolbar button:hover { background: var(--accent-2); }
+  #toolbar button:disabled { opacity: .35; cursor: default; }
+  #pdf-link {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    border-radius: 4px;
+    font-size: 15px;
+    text-decoration: none;
+  }
+  #pdf-link:hover { background: var(--accent-2); }
+  #page-indicator {
+    display: flex; align-items: center; gap: 6px; margin-left: 4px;
+  }
+  #page-input {
+    width: 56px;
+    text-align: center;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    padding: 6px 4px;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+  }
+  #page-total { opacity: .7; }
+  .spacer { flex: 1; }
+  #mode-badge {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: var(--ink-dim);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 3px 10px;
+    opacity: .8;
+  }
+
+  #book-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, #3a332b 0%, #221e18 100%);
+    position: relative;
+    padding: 20px;
+  }
+  #book { box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  /* La librería calcula el alto de la página a partir del ANCHO
+     disponible (relación 500x707 fija vía padding-bottom), sin
+     mirar el alto real de la ventana. Sin la barra lateral, el
+     área del libro queda mucho más ancha y esa cuenta se pasaba
+     de largo verticalmente (se veía "con zoom", recortada arriba
+     y abajo). Estos dos límites de max-width recalculan el ancho
+     máximo permitido en función del alto disponible, según el
+     libro esté mostrando una página (--portrait) o dos (--landscape). */
+  /* La librería fija max-width por JS como estilo inline (mayor
+     prioridad que cualquier regla de hoja de estilos), por eso acá
+     hace falta !important para poder recortarlo según el alto. */
+  #book:has(.stf__wrapper.--landscape) { max-width: min(1800px, calc((100vh - 120px) * 1.4144)) !important; }
+  #book:has(.stf__wrapper.--portrait) { max-width: min(1800px, calc((100vh - 120px) * 0.7072)) !important; }
+  #book .page {
+    background-color: #efe8d8;
+  }
+  #book .page img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    background: #efe8d8;
+  }
+  #loading {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-dim);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    background: var(--bg);
+  }
+  #hint {
+    position: absolute;
+    bottom: 14px; left: 50%; transform: translateX(-50%);
+    font-family: Arial, sans-serif;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    opacity: .55;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="toolbar">
+    <span id="book-title">Código Civil y Comercial</span>
+    <button id="prev-btn" title="Página anterior">&#8249;</button>
+    <button id="next-btn" title="Página siguiente">&#8250;</button>
+    <div id="page-indicator">
+      <input id="page-input" type="number" min="1" max="517" value="1">
+      <span id="page-total">/ 517</span>
+    </div>
+    <button id="fullscreen-btn" title="Pantalla completa">&#9974;</button>
+    <a id="pdf-link" href="pdf/codigo-civil-y-comercial.pdf" target="_blank" rel="noopener" title="Descargar PDF">&#8681;</a>
+    <div class="spacer"></div>
+    <span id="mode-badge">Consorcio al Día</span>
+  </div>
+
+  <div id="book-area">
+    <div id="loading">Cargando libro...</div>
+    <div id="book"></div>
+    <div id="hint">Hacé clic cerca del borde de la página, o usá las flechas del teclado, para pasar de hoja</div>
+  </div>
+
+</div>
+
+<script>
+const TOTAL_PAGES = 517;
+const PAGE_IMAGES = Array.from({ length: TOTAL_PAGES }, (_, i) =>
+  `pages/page-${String(i + 1).padStart(3, "0")}.jpg`);
+
+let pageFlip = null;
+
+function updateUI(pageNum) {
+  document.getElementById('page-input').value = pageNum;
+  document.getElementById('prev-btn').disabled = pageNum <= 1;
+  document.getElementById('next-btn').disabled = pageNum >= TOTAL_PAGES;
+}
+
+function goToPage(pageNum) {
+  pageNum = Math.max(1, Math.min(TOTAL_PAGES, pageNum));
+  if (pageFlip) {
+    pageFlip.flip(pageNum - 1);
+  }
+}
+
+function initBook() {
+  const el = document.getElementById('book');
+  pageFlip = new St.PageFlip(el, {
+    width: 500,
+    height: 707,
+    size: 'stretch',
+    minWidth: 280,
+    maxWidth: 900,
+    minHeight: 396,
+    maxHeight: 1273,
+    maxShadowOpacity: 0.5,
+    showCover: false,
+    usePortrait: true,
+    mobileScrollSupport: false,
+    useMouseEvents: true,
+  });
+
+  pageFlip.loadFromImages(PAGE_IMAGES);
+
+  pageFlip.on('flip', (e) => {
+    updateUI(e.data + 1);
+  });
+
+  pageFlip.on('init', () => {
+    document.getElementById('loading').style.display = 'none';
+    updateUI(1);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initBook();
+
+  document.getElementById('prev-btn').addEventListener('click', () => pageFlip && pageFlip.flipPrev());
+  document.getElementById('next-btn').addEventListener('click', () => pageFlip && pageFlip.flipNext());
+
+  document.getElementById('page-input').addEventListener('change', (e) => {
+    const v = parseInt(e.target.value, 10);
+    if (!isNaN(v)) goToPage(v);
+  });
+
+  document.getElementById('fullscreen-btn').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target && (e.target.tagName === 'INPUT')) return;
+    if (e.key === 'ArrowRight') pageFlip && pageFlip.flipNext();
+    if (e.key === 'ArrowLeft') pageFlip && pageFlip.flipPrev();
+  });
+});
+</script>
+</body>
+</html>
