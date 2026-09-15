@@ -1,6 +1,6 @@
-# Código Civil y Comercial de la Nación — Libro Digital
+# MVP Newsletter — Libro Digital
 
-Visor flipbook del Código Civil y Comercial de la Nación (Argentina), con efecto de paso de página, navegación por teclado, ir a página y pantalla completa.
+Visor flipbook del boletín MVP, con efecto de paso de página, navegación por teclado, ir a página y pantalla completa.
 
 Construido con [StPageFlip](https://github.com/Nodlik/StPageFlip) (`page-flip@2.0.7`, incluido localmente en `js/`, sin depender de CDNs).
 
@@ -9,7 +9,7 @@ Construido con [StPageFlip](https://github.com/Nodlik/StPageFlip) (`page-flip@2.
 ```
 ├── index.html    # visor
 ├── js/           # librería page-flip (UMD para navegador)
-├── pages/        # 517 imágenes JPG de las páginas
+├── pages/        # 5 imágenes JPG de las páginas
 └── pdf/          # PDF original descargable
 ```
 
